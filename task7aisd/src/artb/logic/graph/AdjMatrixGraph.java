@@ -1,4 +1,4 @@
-package deveone.logic.graph;
+package artb.logic.graph;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -6,12 +6,14 @@ import java.util.Iterator;
 public class AdjMatrixGraph implements Graph {
 
     private boolean[][] adjMatrix = null;
+    private boolean[][] edgeAvailability = null;
     private boolean[] vertexAvailability = null;
     private int vCount = 0;
     private int eCount = 0;
 
     public AdjMatrixGraph(int vertexCount) {
         adjMatrix = new boolean[vertexCount][vertexCount];
+        edgeAvailability = new boolean[vertexCount][vertexCount];
         vertexAvailability = new boolean[vertexCount];
         vCount = vertexCount;
     }
@@ -35,18 +37,22 @@ public class AdjMatrixGraph implements Graph {
         int maxV = Math.max(v1, v2);
         if (maxV >= vertexCount()) {
             adjMatrix = Arrays.copyOf(adjMatrix, maxV + 1);
+            edgeAvailability = Arrays.copyOf(edgeAvailability, maxV + 1);
             vertexAvailability = Arrays.copyOf(vertexAvailability, maxV + 1);
             for (int i = 0; i <= maxV; i++) {
                 adjMatrix[i] = i < vCount ? Arrays.copyOf(adjMatrix[i], maxV + 1) : new boolean[maxV + 1];
+                edgeAvailability[i] = i < vCount ? Arrays.copyOf(edgeAvailability[i], maxV + 1) : new boolean[maxV + 1];
             }
             vCount = maxV + 1;
         }
         if (!adjMatrix[v1][v2]) {
             adjMatrix[v1][v2] = true;
+            edgeAvailability[v1][v2] = true;
             eCount++;
             // для наследников
             if (!(this instanceof Digraph)) {
                 adjMatrix[v2][v1] = true;
+                edgeAvailability[v2][v1] = true;
             }
         }
         vertexAvailability[v1] = true;
@@ -55,17 +61,23 @@ public class AdjMatrixGraph implements Graph {
 
     @Override
     public boolean[][] getBooleanAdjMatrix() {
-        return adjMatrix;
+        boolean[][] copy = new boolean[vertexCount()][];
+        for (int i = 0; i < vertexCount(); i++) {
+            copy[i] = Arrays.copyOf(adjMatrix[i], vertexCount());
+        }
+        return copy;
     }
+
+
 
     @Override
     public void removeEdge(int v1, int v2) {
-        if (adjMatrix[v1][v2]) {
-            adjMatrix[v1][v2] = false;
+        if (adjMatrix[v1][v2] && edgeAvailability[v1][v2]) {
+            edgeAvailability[v1][v2] = false;
             eCount--;
             // для наследников
             if (!(this instanceof Digraph)) {
-                adjMatrix[v2][v1] = false;
+                edgeAvailability[v2][v1] = false;
             }
         }
     }
@@ -78,7 +90,7 @@ public class AdjMatrixGraph implements Graph {
             @Override
             public Iterator<Integer> iterator() {
                 for (int i = 0; i < vCount; i++) {
-                    if (adjMatrix[v][i]) {
+                    if (edgeAvailability[v][i]) {
                         nextAdj = i;
                         break;
                     }
@@ -95,7 +107,7 @@ public class AdjMatrixGraph implements Graph {
                         Integer result = nextAdj;
                         nextAdj = null;
                         for (int i = result + 1; i < vCount; i++) {
-                            if (adjMatrix[v][i]) {
+                            if (edgeAvailability[v][i]) {
                                 nextAdj = i;
                                 break;
                             }
@@ -113,12 +125,12 @@ public class AdjMatrixGraph implements Graph {
     }
 
     public void restoreEdge(int v1, int v2) {
-        if (!adjMatrix[v1][v2]) {
-            adjMatrix[v1][v2] = true;
+        if (adjMatrix[v1][v2] && !edgeAvailability[v1][v2]) {
+            edgeAvailability[v1][v2] = true;
             eCount++;
             // для наследников
             if (!(this instanceof Digraph)) {
-                adjMatrix[v2][v1] = true;
+                edgeAvailability[v2][v1] = true;
             }
         }
         vertexAvailability[v1] = true;
@@ -132,8 +144,11 @@ public class AdjMatrixGraph implements Graph {
 
         // Удалить ребра, связанные с вершиной v
         for (int i = 0; i < vertexCount(); i++) {
-            if (adjMatrix[v][i]) {
+            if (edgeAvailability[v][i]) {
                 removeEdge(v, i);
+            }
+            if (edgeAvailability[i][v]) {
+                removeEdge(i, v);
             }
         }
 
@@ -149,7 +164,10 @@ public class AdjMatrixGraph implements Graph {
 
         // Восстановить ребра, связанные с вершиной v
         for (int i = 0; i < vertexCount(); i++) {
-            if (adjMatrix[i][v]) {
+            if (adjMatrix[v][i] && !edgeAvailability[v][i]) {
+                restoreEdge(v, i);
+            }
+            if (adjMatrix[i][v] && !edgeAvailability[i][v]) {
                 restoreEdge(i, v);
             }
         }
@@ -161,5 +179,8 @@ public class AdjMatrixGraph implements Graph {
         }
 
         return vertexAvailability[v];
+    }
+    public boolean isEdgeAvailable(int v1, int v2) {
+        return edgeAvailability[v1][v2];
     }
 }

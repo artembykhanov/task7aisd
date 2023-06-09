@@ -1,4 +1,4 @@
-package deveone.graphics.additional;
+package artb.graphics.additional;
 
 import java.awt.*;
 

@@ -1,9 +1,9 @@
-package deveone.graphics;
+package artb.graphics;
 
-import deveone.logic.Logic;
-import deveone.graphics.additional.ManipulateModes;
-import deveone.graphics.additional.ObjectModes;
-import deveone.logic.graph.AdjMatrixGraph;
+import artb.logic.Logic;
+import artb.graphics.additional.ManipulateModes;
+import artb.graphics.additional.ObjectModes;
+import artb.logic.graph.AdjMatrixGraph;
 
 import javax.swing.*;
 import java.awt.*;

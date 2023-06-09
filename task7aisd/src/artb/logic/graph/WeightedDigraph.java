@@ -1,4 +1,4 @@
-package deveone.logic.graph;
+package artb.logic.graph;
 
 /**
  * Интерфейс для описания взвешенного ориентированного графа (орграфа)

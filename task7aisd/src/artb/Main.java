@@ -1,6 +1,6 @@
-package deveone;
+package artb;
 
-import deveone.graphics.MainFrame;
+import artb.graphics.MainFrame;
 
 import javax.swing.*;
 

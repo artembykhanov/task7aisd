@@ -1,6 +1,6 @@
-package deveone.logic;
+package artb.logic;
 
-import deveone.logic.graph.*;
+import artb.logic.graph.*;
 
 import java.util.*;
 
@@ -23,11 +23,10 @@ public class Logic {
 
     public static ArrayList<Edge> findEdges(AdjMatrixGraph graph, int N) {
         int vertices = graph.vertexCount();
-        boolean[][] adjacencyList = graph.getBooleanAdjMatrix();
         ArrayList<Edge> Edges = new ArrayList<>();
         for (int u = 0; u < vertices; u++) {
             for (int v = 0; v < vertices; v++) {
-                if (adjacencyList[u][v]) {
+                if (graph.isEdgeAvailable(u, v)) {
                     graph.removeEdge(u, v);
                     if (!isGraphConnected(graph, N)) {
                         if (u < v) {
@@ -46,11 +45,13 @@ public class Logic {
         int vertices = graph.vertexCount();
         ArrayList<Integer> Vertices = new ArrayList<>();
         for (int vertex = 0; vertex < vertices; vertex++) {
-            graph.removeVertex(vertex);
-            if (!isGraphConnected(graph, N)) {
-                Vertices.add(vertex);
+            if (graph.isVertexAvailable(vertex)) {
+                graph.removeVertex(vertex);
+                if (!isGraphConnected(graph, N)) {
+                    Vertices.add(vertex);
+                }
+                graph.restoreVertex(vertex);
             }
-            graph.restoreVertex(vertex);
         }
 
         return Vertices;
@@ -58,21 +59,28 @@ public class Logic {
 
     public static boolean isGraphConnected(AdjMatrixGraph graph, int depth) {
         int vertices = graph.vertexCount();
-        boolean[][] adjacencyList = graph.getBooleanAdjMatrix();
         boolean[] visited = new boolean[vertices];
-        int numComponents = 0;
 
         for (int i = 0; i < vertices; i++) {
-            if (!visited[i] && graph.isVertexAvailable(i)) {
-                numComponents++;
-                bfs(i, visited, vertices, adjacencyList, depth);
+            if (graph.isVertexAvailable(i)) {
+                Arrays.fill(visited, false); // Сбрасываем флаги посещенных вершин перед каждым обходом
+                bfs(i, visited, vertices, depth, graph);
+
+                // Проверяем, все ли вершины были посещены
+                for (int k = 0; k < visited.length; k++) {
+                    if (!visited[k] && graph.isVertexAvailable(k)) {
+                        return false; // Если есть непосещенные вершины, граф не связный
+                    }
+                }
+
             }
         }
 
-        return numComponents == 1; // граф связный, если количество компонент связности равно 1
+        return true; // Если все вершины были посещены в каждом обходе, граф связный
     }
 
-    private static void bfs(int startVertex, boolean[] visited, int vertices, boolean[][] adjacencyList, int depth) {
+
+    private static void bfs(int startVertex, boolean[] visited, int vertices, int depth, AdjMatrixGraph graph) {
         Queue<Integer> queue = new LinkedList<>();
         queue.offer(startVertex);
         visited[startVertex] = true;
@@ -90,13 +98,15 @@ public class Logic {
             }
 
             for (int neighbor = 0; neighbor < vertices; neighbor++) {
-                if (adjacencyList[currentVertex][neighbor] && !visited[neighbor]) {
+                if (graph.isEdgeAvailable(currentVertex, neighbor) && !visited[neighbor]) {
                     queue.offer(neighbor);
                     visited[neighbor] = true;
-                    levels[neighbor] = currentLevel + 1;
+                    levels[neighbor] = Math.min(levels[neighbor], currentLevel + 1);
                 }
             }
         }
     }
+
+
 }
 
